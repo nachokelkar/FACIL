@@ -1,12 +1,9 @@
-import time
 import torch
-import numpy as np
+from torch import autograd
 from copy import deepcopy
 from argparse import ArgumentParser
-from torch.utils.data import DataLoader
 
 from .incremental_learning import Inc_Learning_Appr
-from datasets.exemplars_dataset import ExemplarsDataset
 
 
 class Appr(Inc_Learning_Appr):
@@ -91,8 +88,7 @@ class Appr(Inc_Learning_Appr):
 
         self.tlc_optimizer = torch.optim.SGD(
             self.bias_layer.parameters(),
-            lr=self.lr * 10e-7,
-            momentum=0.9
+            # lr=self.lr * 10e-7
         )
 
         # STAGE 1: DISTILLATION
@@ -102,6 +98,33 @@ class Appr(Inc_Learning_Appr):
         self.model_old = deepcopy(self.model)
         self.model_old.eval()
         self.model_old.freeze_all()
+
+        # Bias correction step
+        if t > 0:
+            for images, _ in trn_loader:
+                self.model.eval()
+
+                # Forward current model
+                preb_outputs = self.model(images.to(self.device))
+
+                # Allow to learn the alpha and beta for the current task
+                self.bias_layer.alpha.requires_grad = True
+                self.bias_layer.beta.requires_grad = True
+
+                # Calculate bias loss
+                loss = self.bias_loss_fn(
+                    [o.detach() for o in preb_outputs]
+                )
+                # print(loss.item())
+
+                # Gradient step
+                self.tlc_optimizer.zero_grad()
+                loss.backward()
+                self.tlc_optimizer.step()
+
+                # Fix alpha and beta after learning them
+                self.bias_layer.alpha.requires_grad = False
+                self.bias_layer.beta.requires_grad = False
 
         # Print all alpha and beta values
         for task in range(t + 1):
@@ -118,8 +141,8 @@ class Appr(Inc_Learning_Appr):
             # Forward old model
             targets_old = None
             if t > 0:
-                targets_old = self.model_old(images.to(self.device))
-                targets_old = self.bias_forward(targets_old)  # apply bias correction
+                preb_outputs_old = self.model_old(images.to(self.device))
+                targets_old = self.bias_forward(preb_outputs_old)  # apply bias correction
             # Forward current model
             preb_outputs = self.model(images.to(self.device))
             outputs = self.bias_forward(preb_outputs)  # apply bias correction
@@ -129,39 +152,6 @@ class Appr(Inc_Learning_Appr):
             loss.backward()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.clipgrad)
             self.optimizer.step()
-
-            # Bias correction step
-            if t > 0:
-                self.model.eval()
-
-                # Allow to learn the alpha and beta for the current task
-                self.bias_layer.alpha.requires_grad = True
-                self.bias_layer.beta.requires_grad = True
-
-                # In their code is specified that momentum is always 0.9
-                # tlc_optimizer = torch.optim.SGD(
-                #     self.bias_layer.parameters(),
-                #     lr=self.lr * 10e-7,
-                #     momentum=0.9
-                # )
-
-                # [o.detach() for o in preb_outputs]
-
-                # Calculate bias loss
-                loss = self.bias_loss_fn([o.detach() for o in preb_outputs])
-                # print(loss.item())
-
-                # Gradient step
-                self.tlc_optimizer.zero_grad()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.bias_layer.parameters(), 10e-3)
-                self.tlc_optimizer.step()
-
-                # print(self.bias_layer.alpha, self.bias_layer.beta)
-
-                # Fix alpha and beta after learning them
-                self.bias_layer.alpha.requires_grad = False
-                self.bias_layer.beta.requires_grad = False
 
     def eval(self, t, val_loader):
         """Contains the evaluation code"""
