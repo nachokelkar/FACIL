@@ -1,12 +1,9 @@
 import time
 import torch
-import numpy as np
 from copy import deepcopy
 from argparse import ArgumentParser
-from torch.utils.data import DataLoader
 
 from .incremental_learning import Inc_Learning_Appr
-from datasets.exemplars_dataset import ExemplarsDataset
 
 
 class Appr(Inc_Learning_Appr):

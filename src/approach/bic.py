@@ -41,7 +41,7 @@ class Appr(Inc_Learning_Appr):
 
         have_exemplars = self.exemplars_dataset.max_num_exemplars + self.exemplars_dataset.max_num_exemplars_per_class
         assert (have_exemplars > 0), 'Error: BiC needs exemplars.'
-        
+
     @staticmethod
     def exemplars_dataset_class():
         return ExemplarsDataset
