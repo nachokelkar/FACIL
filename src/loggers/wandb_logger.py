@@ -11,9 +11,7 @@ class Logger(ExperimentLogger):
         super(Logger, self).__init__(log_path, exp_name, begin_time)
         wandb.init(
             project="ideas-tlc",
-            config={
-                "exp_name": exp_name
-            },
+            name=exp_name,
             reinit=False
         )
 
