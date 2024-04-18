@@ -29,7 +29,7 @@ def main(argv=None):
                         help='Experiment name (default=%(default)s)')
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed (default=%(default)s)')
-    parser.add_argument('--log', default=['disk'], type=str, choices=['disk', 'tensorboard'],
+    parser.add_argument('--log', default=['disk'], type=str, choices=['disk', 'tensorboard', 'wandb'],
                         help='Loggers used (disk, tensorboard) (default=%(default)s)', nargs='*', metavar="LOGGER")
     parser.add_argument('--save-models', action='store_true',
                         help='Save trained models (default=%(default)s)')
