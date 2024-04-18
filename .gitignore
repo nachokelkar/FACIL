@@ -8,5 +8,11 @@ __pycache__/
 # VSCode
 /.vscode/
 
-### macOS ###
+# macOS
 *.DS_Store
+
+# WandB logging
+/wandb
+
+# Pytest cache
+/.pytest_cache
