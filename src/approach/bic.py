@@ -291,8 +291,9 @@ class BiasLayer(torch.nn.Module):
     def __init__(self):
         super(BiasLayer, self).__init__()
         # Initialize alpha and beta with requires_grad=False and only set to True during Stage 2
-        self.alpha = torch.nn.Parameter(torch.ones(1, requires_grad=False, device="cuda"))
-        self.beta = torch.nn.Parameter(torch.zeros(1, requires_grad=False, device="cuda"))
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.alpha = torch.nn.Parameter(torch.ones(1, requires_grad=False, device=device))
+        self.beta = torch.nn.Parameter(torch.zeros(1, requires_grad=False, device=device))
 
     def forward(self, x):
         return self.alpha * x + self.beta
