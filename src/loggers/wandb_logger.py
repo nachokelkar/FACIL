@@ -33,7 +33,7 @@ class Logger(ExperimentLogger):
     def log_result(self, array, name, step):
         if array.ndim == 1:
             # log as scalars
-            wandb.run.summary[name + "_" + step] = array[step]
+            wandb.run.summary[str(name) + "_" + str(step)] = array[step]
 
         elif array.ndim == 2:
             s = ""
@@ -46,7 +46,7 @@ class Logger(ExperimentLogger):
                     s += '\tAvg.:{:5.1f}% \n'.format(100 * array[i, :i].mean())
             else:
                 s += '\tAvg.:{:5.1f}% \n'.format(100 * array[i, :i + 1].mean())
-            wandb.run.summary[name + "_" + step] = s
+            wandb.run.summary[str(name) + "_" + str(step)] = s
 
     def __del__(self):
         wandb.finish()
