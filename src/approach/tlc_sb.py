@@ -101,7 +101,7 @@ class Appr(Inc_Learning_Appr):
                 for images, _ in trn_loader:
                     self.tlc_optimizer = torch.optim.SGD(
                         self.bias_layers[i].parameters(),
-                        # lr=self.lr * 10e-7
+                        lr=self.lr
                     )
 
                     # Forward current model
