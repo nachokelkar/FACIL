@@ -98,31 +98,32 @@ class Appr(Inc_Learning_Appr):
             self.model.eval()
             print('Stage 2: Training bias correction layers')
             for i in range(t):
-                for images, _ in trn_loader:
-                    self.tlc_optimizer = torch.optim.SGD(
-                        self.bias_layers[i].parameters(),
-                        lr=self.lr
-                    )
+                for _ in range(self.bias_epochs):
+                    for images, _ in trn_loader:
+                        self.tlc_optimizer = torch.optim.SGD(
+                            self.bias_layers[i].parameters(),
+                            lr=self.lr
+                        )
 
-                    # Forward current model
-                    preb_outputs = self.model(images.to(self.device))
+                        # Forward current model
+                        preb_outputs = self.model(images.to(self.device))
 
-                    # Allow to learn the alpha and beta for the current task
-                    self.bias_layers[i].beta.requires_grad = True
+                        # Allow to learn the alpha and beta for current task
+                        self.bias_layers[i].beta.requires_grad = True
 
-                    # Calculate bias loss
-                    loss = self.bias_loss_fn(
-                        i,
-                        [o.detach() for o in preb_outputs]
-                    )
+                        # Calculate bias loss
+                        loss = self.bias_loss_fn(
+                            i,
+                            [o.detach() for o in preb_outputs]
+                        )
 
-                    # Gradient step
-                    self.tlc_optimizer.zero_grad()
-                    loss.backward()
-                    self.tlc_optimizer.step()
+                        # Gradient step
+                        self.tlc_optimizer.zero_grad()
+                        loss.backward()
+                        self.tlc_optimizer.step()
 
-                    # Fix alpha and beta after learning them
-                    self.bias_layers[i].beta.requires_grad = False
+                        # Fix alpha and beta after learning them
+                        self.bias_layers[i].beta.requires_grad = False
 
         # Print all alpha and beta values
         for task in range(t + 1):
