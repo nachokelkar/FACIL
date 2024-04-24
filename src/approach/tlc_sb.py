@@ -31,6 +31,7 @@ class Appr(Inc_Learning_Appr):
             eval_on_train=False,
             logger=None,
             num_bias_epochs=200,
+            bias_lr=0.1,
             T=2,
             lamb=-1
     ):
@@ -39,6 +40,7 @@ class Appr(Inc_Learning_Appr):
         super(Appr, self).__init__(model, device, nepochs, lr, lr_min, lr_factor, lr_patience, clipgrad, momentum, wd,
                                    multi_softmax, wu_nepochs, wu_lr_factor, fix_bn, eval_on_train, logger)
         self.bias_epochs = num_bias_epochs
+        self.bias_lr = bias_lr
         self.model_old = None
         self.T = T
         self.lamb = lamb
@@ -59,6 +61,8 @@ class Appr(Inc_Learning_Appr):
         # In the original code they define epochs_per_eval=100 and epoch_val_times=2, making a total of 200 bias epochs
         parser.add_argument('--num-bias-epochs', default=200, type=int, required=False,
                             help='Number of epochs for training bias (default=%(default)s)')
+        parser.add_argument('--bias-lr', default=0.1, type=float, required=False,
+                            help='LR for bias optimiser (default=%(default)s)')
         return parser.parse_known_args(args)
 
     def bias_forward(self, outputs):
@@ -74,7 +78,6 @@ class Appr(Inc_Learning_Appr):
         """
         # STAGE 0: EXEMPLAR MANAGEMENT -- select subset of validation to use in Stage 2 -- val_old, val_new (Fig.2)
         print('Stage 0: Select exemplars from validation')
-        clock0 = time.time()
 
         # number of classes and proto samples per class
         # num_cls = sum(self.model.task_cls) - self.prev_n_classes[-1]
@@ -102,7 +105,7 @@ class Appr(Inc_Learning_Appr):
                     for images, _ in trn_loader:
                         self.tlc_optimizer = torch.optim.SGD(
                             self.bias_layers[i].parameters(),
-                            lr=self.lr
+                            lr=self.bias_lr
                         )
 
                         # Forward current model
