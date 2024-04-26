@@ -109,7 +109,8 @@ class Appr(Inc_Learning_Appr):
                         )
 
                         # Forward current model
-                        preb_outputs = self.model(images.to(self.device))
+                        with torch.no_grad():
+                            preb_outputs = self.model(images.to(self.device))
 
                         # Allow to learn the alpha and beta for current task
                         self.bias_layers[i].beta.requires_grad = True
